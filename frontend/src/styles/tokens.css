@@ -1,0 +1,161 @@
+:root {
+    /* =========================================================
+       BRAND COLORS
+       ========================================================= */
+
+    --color-primary-50: #edf6f9;
+    --color-primary-100: #d7eaf0;
+    --color-primary-200: #b4d8e3;
+    --color-primary-300: #90c6d6;
+    --color-primary-400: #5fadc5;
+    --color-primary-500: #218dae;
+    --color-primary-600: #1e7a97;
+    --color-primary-700: #1c687f;
+    --color-primary-800: #195568;
+    --color-primary-900: #174251;
+
+    --color-secondary-50: #eefafc;
+    --color-secondary-100: #d9f3f8;
+    --color-secondary-200: #b7e8f1;
+    --color-secondary-300: #95ddeb;
+    --color-secondary-400: #66cee2;
+    --color-secondary-500: #2bbbd7;
+    --color-secondary-600: #27a1b9;
+    --color-secondary-700: #23879b;
+    --color-secondary-800: #1f6d7d;
+    --color-secondary-900: #1a535f;
+
+    --color-tertiary-50: #fffdf7;
+    --color-tertiary-100: #fefaed;
+    --color-tertiary-200: #fef6dd;
+    --color-tertiary-300: #fef2cc;
+    --color-tertiary-400: #fdecb6;
+    --color-tertiary-500: #fce59a;
+    --color-tertiary-600: #d6c486;
+    --color-tertiary-700: #b1a372;
+    --color-tertiary-800: #8b835e;
+    --color-tertiary-900: #666249;
+
+    --color-accent-50: #fffcf2;
+    --color-accent-100: #fff8e1;
+    --color-accent-200: #fff1c6;
+    --color-accent-300: #ffebac;
+    --color-accent-400: #ffe287;
+    --color-accent-500: #ffd758;
+    --color-accent-600: #d9b84e;
+    --color-accent-700: #b39a45;
+    --color-accent-800: #8d7b3b;
+    --color-accent-900: #675d32;
+
+    /* =========================================================
+       NEUTRAL COLORS
+       ========================================================= */
+
+    --color-neutral-0: #ffffff;
+    --color-neutral-50: #f5f8fa;
+    --color-neutral-100: #eaf0f3;
+    --color-neutral-200: #d6e0e5;
+    --color-neutral-300: #b7c5cc;
+    --color-neutral-400: #8fa1aa;
+    --color-neutral-500: #657883;
+    --color-neutral-600: #4a5a64;
+    --color-neutral-700: #37444c;
+    --color-neutral-800: #242e34;
+    --color-neutral-900: #151c20;
+    --color-neutral-950: #0c1114;
+
+    /* =========================================================
+       SEMANTIC COLORS
+       ========================================================= */
+
+    --color-danger: #e14b4b;
+    --color-danger-bg: #fdeaea;
+    --color-danger-text: #9a2e2e;
+
+    --color-success-alt: #2fae6b;
+
+    /* =========================================================
+       SEMANTIC MAPPING
+       ========================================================= */
+
+    --color-status-present: var(--color-primary-500);
+    --color-status-absent: var(--color-danger);
+    --color-status-pending: var(--color-accent-500);
+    --color-status-active: var(--color-secondary-500);
+    --color-status-inactive: var(--color-neutral-400);
+
+    --color-border-default: var(--color-neutral-200);
+    --color-border-focus: var(--color-secondary-500);
+
+    /* =========================================================
+       SURFACES
+       ========================================================= */
+
+    --color-surface-page: var(--color-neutral-50);
+    --color-surface-card: var(--color-neutral-0);
+    --color-surface-overlay: var(--color-neutral-0);
+    --color-surface-sidebar: var(--color-neutral-900);
+
+    /* =========================================================
+       TEXT
+       ========================================================= */
+
+    --color-text-heading: var(--color-neutral-800);
+    --color-text-body: var(--color-neutral-600);
+    --color-text-muted: var(--color-neutral-500);
+    --color-text-inverse: var(--color-neutral-0);
+
+    /* =========================================================
+       GRADIENTS
+       ========================================================= */
+
+    --gradient-brand: linear-gradient(
+      135deg,
+      #218dae 0%,
+      #2bbbd7 100%
+    );
+
+    --gradient-warm: linear-gradient(
+      135deg,
+      #ffd758 0%,
+      #fce59a 100%
+    );
+
+    /* =========================================================
+       RADIUS
+       ========================================================= */
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-full: 9999px;
+
+    /* =========================================================
+       SHADOWS
+       ========================================================= */
+
+    --shadow-sm: 0 1px 2px rgba(23, 66, 81, 0.06);
+    --shadow-md: 0 4px 12px rgba(23, 66, 81, 0.08);
+    --shadow-lg: 0 12px 32px rgba(23, 66, 81, 0.12);
+    --shadow-glow-primary: 0 8px 24px rgba(33, 141, 174, 0.25);
+
+    /* =========================================================
+       LAYOUT
+       ========================================================= */
+
+    --page-gutter-desktop: 32px;
+    --page-gutter-mobile: 16px;
+    --card-padding: 24px;
+
+    /* =========================================================
+       MOTION
+       ========================================================= */
+
+    --motion-micro: 150ms;
+    --motion-component: 250ms;
+    --motion-page: 350ms;
+    --motion-decorative: 800ms;
+
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  }
