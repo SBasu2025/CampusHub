@@ -2,6 +2,7 @@ package com.campushub.backend.security;
 
 import com.campushub.backend.entity.Examination;
 import com.campushub.backend.repository.ExaminationRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -11,14 +12,20 @@ import org.springframework.web.server.ResponseStatusException;
 public class CampusHubAuthorizationService {
 
     /*
-     * This is the designated Special Admin account.
+     * The Special Admin ID is supplied through configuration
+     * rather than being hard-coded in the public source code.
      *
-     * The Special Admin has all normal ADMIN permissions plus
-     * the additional ability to manage other administrator accounts
-     * and view administrator IDs.
+     * Local environment:
+     *   CAMPUSHUB_DEMO_SPECIAL_ADMIN_ID
+     *
+     * Production / Render:
+     *   CAMPUSHUB_DEMO_SPECIAL_ADMIN_ID
+     *
+     * This keeps the privileged account identifier out of
+     * application source code.
      */
-    public static final String SPECIAL_ADMIN_ID =
-            "ADMIN_hrmNZO331@";
+    @Value("${campushub.demo.special-admin.id:}")
+    private String specialAdminId;
 
     private final ExaminationRepository examinationRepository;
 
@@ -134,18 +141,15 @@ public class CampusHubAuthorizationService {
 
         if (examination.getProfessor() == null
                 || !principal.id().equals(
-                        examination.getProfessor().getProfId())) {
+                examination.getProfessor().getProfId())) {
 
             throw forbidden();
         }
     }
 
     /**
-     * Allows ONLY the designated Special Admin to perform
+     * Allows ONLY the configured Special Admin to perform
      * Special-Admin-only operations.
-     *
-     * This is intentionally separate from the normal ADMIN
-     * authorization checks above.
      */
     public void requireSpecialAdmin(
             Authentication authentication) {
@@ -154,7 +158,9 @@ public class CampusHubAuthorizationService {
                 getPrincipal(authentication);
 
         if (!"ADMIN".equals(principal.role())
-                || !SPECIAL_ADMIN_ID.equals(principal.id())) {
+                || specialAdminId == null
+                || specialAdminId.isBlank()
+                || !specialAdminId.equals(principal.id())) {
 
             throw forbidden();
         }
@@ -162,11 +168,7 @@ public class CampusHubAuthorizationService {
 
     /**
      * Returns true when the authenticated account is the
-     * designated Special Admin.
-     *
-     * This is useful when a controller needs to expose
-     * read-only information such as other administrator IDs
-     * without changing the authorization flow.
+     * configured Special Admin.
      */
     public boolean isSpecialAdmin(
             Authentication authentication) {
@@ -180,7 +182,9 @@ public class CampusHubAuthorizationService {
         }
 
         return "ADMIN".equals(principal.role())
-                && SPECIAL_ADMIN_ID.equals(principal.id());
+                && specialAdminId != null
+                && !specialAdminId.isBlank()
+                && specialAdminId.equals(principal.id());
     }
 
     /**

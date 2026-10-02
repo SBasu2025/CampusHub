@@ -42,11 +42,16 @@ public class OtpService {
      *
      * Normal accounts continue to receive a random OTP.
      */
+
     @Value("${campushub.demo.enabled:false}")
     private boolean demoModeEnabled;
 
     @Value("${campushub.demo.otp:123456}")
     private String demoOtp;
+
+    // ---------------------------------------------------------
+    // PUBLIC DEMO ADMIN
+    // ---------------------------------------------------------
 
     @Value("${campushub.demo.admin.id:}")
     private String demoAdminId;
@@ -54,11 +59,29 @@ public class OtpService {
     @Value("${campushub.demo.admin.phone:}")
     private String demoAdminPhone;
 
+    // ---------------------------------------------------------
+    // SPECIAL ADMIN
+    // ---------------------------------------------------------
+
+    @Value("${campushub.demo.special-admin.id:}")
+    private String demoSpecialAdminId;
+
+    @Value("${campushub.demo.special-admin.phone:}")
+    private String demoSpecialAdminPhone;
+
+    // ---------------------------------------------------------
+    // PUBLIC DEMO PROFESSOR
+    // ---------------------------------------------------------
+
     @Value("${campushub.demo.professor.id:}")
     private String demoProfessorId;
 
     @Value("${campushub.demo.professor.phone:}")
     private String demoProfessorPhone;
+
+    // ---------------------------------------------------------
+    // PUBLIC DEMO STUDENT
+    // ---------------------------------------------------------
 
     @Value("${campushub.demo.student.id:}")
     private String demoStudentId;
@@ -86,8 +109,8 @@ public class OtpService {
             String phoneNumber) {
 
         /*
-         * For the three configured public demo accounts,
-         * use the fixed demo OTP.
+         * For the configured demo accounts, including the
+         * private Special Admin, use the fixed demo OTP.
          *
          * For every other account, generate a secure random
          * six-digit OTP.
@@ -139,9 +162,9 @@ public class OtpService {
          * The current development sender prints the OTP to the
          * Spring Boot console.
          *
-         * Later, if we add real SMS, this same service can use
-         * another SmsSender implementation without changing the
-         * verification logic.
+         * In the deployed demo, the configured demo accounts
+         * use the fixed demo OTP, so users do not depend on
+         * seeing a backend console.
          */
         smsSender.sendOtp(
                 phoneNumber,
@@ -230,7 +253,7 @@ public class OtpService {
     }
 
     // =========================================================
-    // CHECK PUBLIC DEMO ACCOUNT
+    // CHECK PUBLIC / SPECIAL DEMO ACCOUNT
     // =========================================================
 
     private boolean isConfiguredDemoAccount(
@@ -261,8 +284,11 @@ public class OtpService {
         return switch (normalizedRole) {
 
             case "ADMIN" ->
-                    demoAdminId.equals(normalizedId)
-                            && demoAdminPhone.equals(normalizedPhone);
+                    (demoAdminId.equals(normalizedId)
+                            && demoAdminPhone.equals(normalizedPhone))
+                    ||
+                    (demoSpecialAdminId.equals(normalizedId)
+                            && demoSpecialAdminPhone.equals(normalizedPhone));
 
             case "PROFESSOR" ->
                     demoProfessorId.equals(normalizedId)

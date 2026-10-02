@@ -32,22 +32,6 @@ import {
 const PHONE_NUMBER_REGEX =
   /^\+?[0-9]{7,15}$/;
 
-/*
- * Designated CampusHub Special Admin.
- *
- * Special Admin:
- * - can create administrators
- * - can activate/deactivate other administrators
- * - can delete other administrators
- * - cannot delete their own account
- *
- * Other administrator capabilities remain available
- * through the normal student / professor / academic
- * administration pages.
- */
-const ADMIN_OWNER_ID =
-  "ADMIN_hrmNZO331@";
-
 /**
  * Extract a useful backend/frontend error message.
  *
@@ -156,7 +140,7 @@ export default function AdminAccounts() {
    */
   const canManageOtherAdmins =
     currentUser?.role === "ADMIN" &&
-    currentUser.id === ADMIN_OWNER_ID;
+    currentUser.specialAdmin === true;
 
   // ==========================================================
   // ADMIN DIRECTORY QUERY

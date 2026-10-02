@@ -508,6 +508,15 @@ export interface AuthUser {
   role: UserRole;
 
   displayName: string;
+
+  /**
+   * True only when the backend has identified the
+   * authenticated ADMIN as the configured Special Admin.
+   *
+   * The frontend must use this server-provided flag
+   * instead of comparing the Special Admin ID locally.
+   */
+  specialAdmin: boolean;
 }
 
 // ============================================================

@@ -10,6 +10,7 @@ import com.campushub.backend.entity.Student;
 import com.campushub.backend.repository.AdminRepository;
 import com.campushub.backend.repository.ProfessorRepository;
 import com.campushub.backend.repository.StudentRepository;
+import com.campushub.backend.security.CampusHubAuthorizationService;
 import com.campushub.backend.security.CampusHubPrincipal;
 import com.campushub.backend.security.IdFormatValidator;
 import com.campushub.backend.service.OtpService;
@@ -37,7 +38,8 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private static final String SESSION_ATTRIBUTE = "CAMPUSHUB_SESSION_ID";
+    private static final String SESSION_ATTRIBUTE =
+            "CAMPUSHUB_SESSION_ID";
 
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
@@ -46,6 +48,7 @@ public class AuthController {
     private final AdminRepository adminRepository;
     private final OtpService otpService;
     private final UserSessionService userSessionService;
+    private final CampusHubAuthorizationService authorizationService;
 
     public AuthController(
             AuthenticationManager authenticationManager,
@@ -54,7 +57,8 @@ public class AuthController {
             ProfessorRepository professorRepository,
             AdminRepository adminRepository,
             OtpService otpService,
-            UserSessionService userSessionService) {
+            UserSessionService userSessionService,
+            CampusHubAuthorizationService authorizationService) {
 
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
@@ -63,6 +67,7 @@ public class AuthController {
         this.adminRepository = adminRepository;
         this.otpService = otpService;
         this.userSessionService = userSessionService;
+        this.authorizationService = authorizationService;
     }
 
     // =====================================================
@@ -82,12 +87,20 @@ public class AuthController {
             return ResponseEntity.badRequest().build();
         }
 
-        String id = request.id().trim();
-        String phoneNumber = request.phoneNumber().trim();
+        String id =
+                request.id().trim();
 
-        MatchedAccount account = matchAccount(id, phoneNumber);
+        String phoneNumber =
+                request.phoneNumber().trim();
+
+        MatchedAccount account =
+                matchAccount(
+                        id,
+                        phoneNumber
+                );
 
         if (account == null) {
+
             /*
              * Use the same generic response whether:
              * - the ID does not exist
@@ -139,10 +152,17 @@ public class AuthController {
             return ResponseEntity.badRequest().build();
         }
 
-        String id = request.id().trim();
-        String phoneNumber = request.phoneNumber().trim();
+        String id =
+                request.id().trim();
 
-        MatchedAccount account = matchAccount(id, phoneNumber);
+        String phoneNumber =
+                request.phoneNumber().trim();
+
+        MatchedAccount account =
+                matchAccount(
+                        id,
+                        phoneNumber
+                );
 
         if (account == null) {
             return ResponseEntity.status(401).build();
@@ -153,33 +173,41 @@ public class AuthController {
         }
 
         try {
+
             otpService.verifyOtp(
                     account.id(),
                     request.otp().trim()
             );
+
         } catch (IllegalArgumentException e) {
+
             return ResponseEntity.status(401).build();
         }
 
         Authentication authentication;
 
         try {
+
             /*
              * The OTP has already verified the user's ID + phone.
              * The existing CampusHubAuthenticationProvider is still
              * responsible for resolving the account and its role.
              */
-            authentication = authenticationManager.authenticate(
-                    UsernamePasswordAuthenticationToken.unauthenticated(
-                            id,
-                            null
-                    )
-            );
+            authentication =
+                    authenticationManager.authenticate(
+                            UsernamePasswordAuthenticationToken
+                                    .unauthenticated(
+                                            id,
+                                            null
+                                    )
+                    );
 
         } catch (DisabledException e) {
+
             return ResponseEntity.status(403).build();
 
         } catch (BadCredentialsException e) {
+
             return ResponseEntity.status(401).build();
         }
 
@@ -201,18 +229,20 @@ public class AuthController {
         );
 
         CampusHubPrincipal principal =
-                (CampusHubPrincipal) authentication.getPrincipal();
+                (CampusHubPrincipal)
+                        authentication.getPrincipal();
 
         /*
          * Create a separate persistent CampusHub session record.
          * This records the login independently of Spring Security's
          * own HttpSession.
          */
-        var session = userSessionService.startSession(
-                principal.id(),
-                principal.role(),
-                phoneNumber
-        );
+        var session =
+                userSessionService.startSession(
+                        principal.id(),
+                        principal.role(),
+                        phoneNumber
+                );
 
         /*
          * Store our persistent session ID inside the HTTP session
@@ -224,11 +254,17 @@ public class AuthController {
                         session.getSessionId()
                 );
 
+        boolean isSpecialAdmin =
+                authorizationService.isSpecialAdmin(
+                        authentication
+                );
+
         return ResponseEntity.ok(
                 new AuthResponse(
                         principal.id(),
                         principal.role(),
                         principal.displayName(),
+                        isSpecialAdmin,
                         "Login successful."
                 )
         );
@@ -249,13 +285,20 @@ public class AuthController {
         }
 
         CampusHubPrincipal principal =
-                (CampusHubPrincipal) authentication.getPrincipal();
+                (CampusHubPrincipal)
+                        authentication.getPrincipal();
+
+        boolean isSpecialAdmin =
+                authorizationService.isSpecialAdmin(
+                        authentication
+                );
 
         return ResponseEntity.ok(
                 Map.of(
                         "id", principal.id(),
                         "role", principal.role(),
-                        "displayName", principal.displayName()
+                        "displayName", principal.displayName(),
+                        "specialAdmin", isSpecialAdmin
                 )
         );
     }
@@ -272,12 +315,15 @@ public class AuthController {
         /*
          * Find the current HTTP session without creating a new one.
          */
-        var session = request.getSession(false);
+        var session =
+                request.getSession(false);
 
         if (session != null) {
 
             Object sessionId =
-                    session.getAttribute(SESSION_ATTRIBUTE);
+                    session.getAttribute(
+                            SESSION_ATTRIBUTE
+                    );
 
             if (sessionId instanceof String sessionIdString) {
 
@@ -286,7 +332,9 @@ public class AuthController {
                  * logout_time, but do not modify an already-closed
                  * session.
                  */
-                userSessionService.endSession(sessionIdString);
+                userSessionService.endSession(
+                        sessionIdString
+                );
             }
         }
 

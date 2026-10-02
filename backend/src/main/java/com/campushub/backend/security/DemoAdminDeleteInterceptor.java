@@ -14,8 +14,14 @@ public class DemoAdminDeleteInterceptor implements HandlerInterceptor {
     @Value("${campushub.demo.enabled:false}")
     private boolean demoModeEnabled;
 
-    @Value("${campushub.demo.admin.id:}")
-    private String demoAdminId;
+    private final CampusHubAuthorizationService authorizationService;
+
+    public DemoAdminDeleteInterceptor(
+            CampusHubAuthorizationService authorizationService) {
+
+        this.authorizationService =
+                authorizationService;
+    }
 
     @Override
     public boolean preHandle(
@@ -24,26 +30,55 @@ public class DemoAdminDeleteInterceptor implements HandlerInterceptor {
             Object handler) throws Exception {
 
         /*
-         * Only protect DELETE requests made to the REST API.
+         * =====================================================
+         * DEMO MODE DELETE POLICY
+         * =====================================================
          *
-         * The normal Spring Security authorization rules still
-         * decide whether an account is allowed to access an endpoint.
+         * When demo mode is OFF:
          *
-         * This interceptor adds one extra restriction:
+         *     Preserve the normal CampusHub authorization rules.
          *
-         *     Demo Admin -> cannot perform DELETE operations.
+         * When demo mode is ON:
+         *
+         *     Special Admin
+         *         -> DELETE allowed
+         *
+         *     Every other ADMIN
+         *         -> DELETE forbidden
+         *
+         *     Non-ADMIN users
+         *         -> leave normal Spring Security rules untouched
+         *
+         * This means the public demo admin can safely explore
+         * the administrative features without being able to
+         * permanently delete CampusHub data.
+         *
+         * The restriction is enforced server-side, so a user
+         * cannot bypass it merely by calling the DELETE endpoint
+         * directly from the browser or an API client.
          */
 
         if (!demoModeEnabled) {
             return true;
         }
 
-        if (!"DELETE".equalsIgnoreCase(request.getMethod())) {
+        /*
+         * Only protect DELETE requests.
+         */
+        if (!"DELETE".equalsIgnoreCase(
+                request.getMethod())) {
+
             return true;
         }
 
-        String requestUri = request.getRequestURI();
+        String requestUri =
+                request.getRequestURI();
 
+        /*
+         * Only protect REST API DELETE requests.
+         *
+         * Non-API requests are left untouched.
+         */
         if (requestUri == null
                 || !requestUri.startsWith("/api/")) {
 
@@ -55,6 +90,11 @@ public class DemoAdminDeleteInterceptor implements HandlerInterceptor {
                         .getContext()
                         .getAuthentication();
 
+        /*
+         * If there is no authenticated user,
+         * let the normal Spring Security chain
+         * handle the request.
+         */
         if (authentication == null
                 || !authentication.isAuthenticated()) {
 
@@ -70,14 +110,40 @@ public class DemoAdminDeleteInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        boolean isDemoAdmin =
-                "ADMIN".equals(principal.role())
-                        && demoAdminId.equals(principal.id());
+        /*
+         * Only impose this extra restriction on ADMIN accounts.
+         *
+         * Professors/students continue to be governed by the
+         * normal endpoint-specific Spring Security rules.
+         */
+        if (!"ADMIN".equals(
+                principal.role())) {
 
-        if (!isDemoAdmin) {
             return true;
         }
 
+        /*
+         * The Special Admin is exempt from the demo-mode
+         * delete restriction.
+         *
+         * IMPORTANT:
+         * We intentionally ask CampusHubAuthorizationService
+         * whether this account is the Special Admin instead
+         * of hard-coding the Special Admin ID here.
+         *
+         * The actual Special Admin ID therefore remains supplied
+         * through environment configuration.
+         */
+        if (authorizationService.isSpecialAdmin(
+                authentication)) {
+
+            return true;
+        }
+
+        /*
+         * Every ordinary ADMIN is blocked from DELETE while
+         * demo mode is enabled.
+         */
         response.setStatus(
                 HttpServletResponse.SC_FORBIDDEN
         );
@@ -91,7 +157,7 @@ public class DemoAdminDeleteInterceptor implements HandlerInterceptor {
         );
 
         response.getWriter().write(
-                "{\"message\":\"Demo Admin accounts cannot delete data.\"}"
+                "{\"message\":\"Administrator delete operations are disabled in public demo mode.\"}"
         );
 
         return false;

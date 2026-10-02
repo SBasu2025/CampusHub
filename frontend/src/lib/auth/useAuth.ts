@@ -155,6 +155,11 @@ export const useRequestOtp = () => {
  *   2. Spring Security keeps the HTTP session.
  *   3. Backend creates a USER_SESSION record.
  *   4. Frontend stores the authenticated user in Zustand.
+ *
+ * IMPORTANT:
+ * The frontend does NOT calculate whether the user is the
+ * Special Admin. The backend returns the `specialAdmin`
+ * boolean and this value is stored as part of AuthUser.
  */
 export const useLogin = () => {
 
@@ -200,7 +205,7 @@ export const useLogin = () => {
           );
 
         /*
-         * Keep the existing frontend auth-store shape.
+         * Store exactly what the backend told us.
          *
          * phoneNumber and OTP are deliberately NOT stored
          * in Zustand.
@@ -209,6 +214,7 @@ export const useLogin = () => {
           id: response.id,
           role: response.role,
           displayName: response.displayName,
+          specialAdmin: response.specialAdmin,
         };
 
         setUser(user);
@@ -245,8 +251,8 @@ export const useLogin = () => {
  * 401
  *   -> no authenticated session
  *
- * This continues using the existing Spring Security
- * session-cookie authentication.
+ * The backend now returns the server-computed `specialAdmin`
+ * flag as well.
  */
 export const useAuthHydration = () => {
 

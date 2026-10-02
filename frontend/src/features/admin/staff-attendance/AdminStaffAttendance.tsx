@@ -161,13 +161,17 @@ export default function AdminStaffAttendance() {
       (state) => state.user,
     );
 
-  const currentAdminId =
-    currentUser?.role === "ADMIN"
-      ? currentUser.id
-      : "";
-
-  const SUPER_ADMIN_ID =
-    "ADMIN_hrmNZO331@";
+  /*
+   * The backend decides whether the authenticated admin
+   * is the Special Admin and exposes that result as
+   * currentUser.specialAdmin.
+   *
+   * The frontend therefore does not need to know the
+   * Special Admin's ID.
+   */
+  const isSpecialAdmin =
+    currentUser?.role === "ADMIN" &&
+    currentUser.specialAdmin === true;
 
   const today = toIsoDate(
     new Date(),
@@ -182,8 +186,7 @@ export default function AdminStaffAttendance() {
 
   const adminsQuery =
     useAdmins(
-      currentAdminId ===
-        SUPER_ADMIN_ID,
+      isSpecialAdmin,
     );
 
   // ==========================================================
@@ -235,8 +238,7 @@ export default function AdminStaffAttendance() {
 
   const adminHistoryQuery =
     useAdminStaffAttendance(
-      currentAdminId ===
-        SUPER_ADMIN_ID
+      isSpecialAdmin
         ? selectedAdminId
         : "",
     );
@@ -324,15 +326,14 @@ export default function AdminStaffAttendance() {
     );
 
     const adminRows: RosterPerson[] = (
-      currentAdminId ===
-        SUPER_ADMIN_ID
+      isSpecialAdmin
         ? adminsQuery.data ?? []
         : []
     )
       .filter(
         (admin: Admin) =>
           admin.adminId !==
-          currentAdminId,
+          currentUser?.id,
       )
       .map(
         (admin: Admin) => ({
@@ -357,7 +358,8 @@ export default function AdminStaffAttendance() {
     );
   }, [
     adminsQuery.data,
-    currentAdminId,
+    currentUser?.id,
+    isSpecialAdmin,
     professorsQuery.data,
   ]);
 
@@ -812,8 +814,7 @@ export default function AdminStaffAttendance() {
           : Promise.resolve(),
         historyFilter ===
           "admin" &&
-        currentAdminId ===
-          SUPER_ADMIN_ID
+        isSpecialAdmin
           ? adminHistoryQuery.refetch()
           : Promise.resolve(),
         historyFilter ===
@@ -855,8 +856,7 @@ export default function AdminStaffAttendance() {
           : Promise.resolve(),
         historyFilter ===
           "admin" &&
-        currentAdminId ===
-          SUPER_ADMIN_ID
+        isSpecialAdmin
           ? adminHistoryQuery.refetch()
           : Promise.resolve(),
         historyFilter ===
@@ -882,8 +882,7 @@ export default function AdminStaffAttendance() {
   ) {
     if (
       filter === "admin" &&
-      currentAdminId !==
-        SUPER_ADMIN_ID
+      !isSpecialAdmin
     ) {
       setSelectedAdminId("");
       setHistoryFilter("all");
@@ -913,10 +912,6 @@ export default function AdminStaffAttendance() {
   // ==========================================================
   // LOADING / ERROR STATE
   // ==========================================================
-
-  const isSpecialAdmin =
-    currentAdminId ===
-    SUPER_ADMIN_ID;
 
   const referenceLoading =
     professorsQuery.isLoading ||
