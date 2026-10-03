@@ -88,6 +88,100 @@ function toInputTime(
 }
 
 // ============================================================
+// TIMETABLE DISPLAY NORMALIZATION
+// ============================================================
+
+const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+function getNextOccurrenceOfWeekday(
+  weekdayName: string,
+): string | null {
+  const normalized =
+    weekdayName
+      .trim()
+      .toLowerCase();
+
+  const weekdayIndex =
+    WEEKDAYS.findIndex(
+      (day) =>
+        day.toLowerCase() ===
+        normalized,
+    );
+
+  if (weekdayIndex === -1) {
+    return null;
+  }
+
+  const today = new Date();
+  const todayWeekday = today.getDay();
+
+  let daysUntil =
+    weekdayIndex - todayWeekday;
+
+  if (daysUntil < 0) {
+    daysUntil += 7;
+  }
+
+  const occurrence =
+    new Date(today);
+
+  occurrence.setDate(
+    today.getDate() + daysUntil,
+  );
+
+  const year =
+    occurrence.getFullYear();
+
+  const month =
+    String(
+      occurrence.getMonth() + 1,
+    ).padStart(2, "0");
+
+  const day =
+    String(
+      occurrence.getDate(),
+    ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function toDisplaySession(
+  session: ClassSession,
+): ClassSession {
+  // Keep already-correct ISO dates unchanged.
+  if (
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      session.day,
+    )
+  ) {
+    return session;
+  }
+
+  const isoDate =
+    getNextOccurrenceOfWeekday(
+      session.day,
+    );
+
+  // Unknown values are left untouched rather than guessed.
+  if (!isoDate) {
+    return session;
+  }
+
+  return {
+    ...session,
+    day: isoDate,
+  };
+}
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
@@ -334,6 +428,31 @@ export default function AdminTimetable() {
       semesterFilter,
       sessionsQuery.data,
     ]);
+
+  // ==========================================================
+  // DISPLAY SESSIONS
+  // ==========================================================
+  //
+  // The database currently contains legacy weekday values such as
+  // Monday / Wednesday / Friday for some class sessions. The shared
+  // agenda/calendar component expects ISO dates.
+  //
+  // IMPORTANT: this is a display-only copy. The original session
+  // objects are preserved so Edit/Delete continue to operate on the
+  // real database record without changing a legacy weekday into a
+  // generated calendar date accidentally.
+
+  const displaySessions =
+    useMemo(
+      () =>
+        filteredSessions.map(
+          (session) =>
+            toDisplaySession(
+              session,
+            ),
+        ),
+      [filteredSessions],
+    );
 
   // ==========================================================
   // OPTIONS
@@ -724,8 +843,14 @@ export default function AdminTimetable() {
                 teaching.professor.profId,
 
               subjectId:
-                teaching.subject
-                  .subjectId,
+                teaching.professor
+                  .profId ===
+                selectedProfessorId
+                  ? teaching.professor
+                      .profId
+                  : teaching
+                      .professor
+                      .profId,
             },
           },
 
@@ -1179,14 +1304,26 @@ export default function AdminTimetable() {
         ) : (
           <ClassSessionAgenda
             sessions={
-              filteredSessions
+              displaySessions
             }
             mode={
               viewMode
             }
-            onSessionClick={
-              openEdit
-            }
+            onSessionClick={(
+              session,
+            ) => {
+              const originalSession =
+                filteredSessions.find(
+                  (item) =>
+                    item.sessionId ===
+                    session.sessionId,
+                );
+
+              openEdit(
+                originalSession ??
+                  session,
+              );
+            }}
             renderAction={(
               session,
             ) => (
@@ -1194,11 +1331,19 @@ export default function AdminTimetable() {
                 variant="icon"
                 aria-label={`Edit ${session.sessionId}`}
                 title="Edit session"
-                onClick={() =>
+                onClick={() => {
+                  const originalSession =
+                    filteredSessions.find(
+                      (item) =>
+                        item.sessionId ===
+                        session.sessionId,
+                    );
+
                   openEdit(
-                    session,
-                  )
-                }
+                    originalSession ??
+                      session,
+                  );
+                }}
               >
                 <Pencil className="h-4 w-4" />
               </Button>
