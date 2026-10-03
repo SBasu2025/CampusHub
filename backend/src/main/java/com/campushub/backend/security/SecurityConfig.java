@@ -28,12 +28,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityContextRepository securityContextRepository() {
+
         return new HttpSessionSecurityContextRepository();
     }
 
     // =========================================================
     // PASSWORD ENCODER
     // =========================================================
+
     //
     // Used by OtpService to BCrypt-hash the generated OTP
     // before storing it in LOGIN_OTP.
@@ -46,6 +48,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder();
     }
 
@@ -67,6 +70,9 @@ public class SecurityConfig {
     // Frontend:
     // http://localhost:5173
     //
+    // Production frontend:
+    // https://campus-hub-orcin.vercel.app
+    //
     // Backend:
     // http://localhost:8080
     //
@@ -80,7 +86,10 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(
-                List.of("http://localhost:5173")
+                List.of(
+                        "http://localhost:5173",
+                        "https://campus-hub-orcin.vercel.app"
+                )
         );
 
         config.setAllowedMethods(
@@ -124,6 +133,7 @@ public class SecurityConfig {
             throws Exception {
 
         http
+
                 // =====================================================
                 // CORS
                 // =====================================================
