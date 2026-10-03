@@ -13,8 +13,8 @@ import com.campushub.backend.repository.DepartmentRepository;
 import com.campushub.backend.repository.ProfessorRepository;
 import com.campushub.backend.repository.StudentRepository;
 import com.campushub.backend.repository.SubjectRepository;
-import com.campushub.backend.security.CampusHubAuthorizationService;
 import com.campushub.backend.security.CampusHubIdGenerator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +36,15 @@ public class AdminService {
     private final DepartmentRepository departmentRepository;
     private final UserSessionService userSessionService;
     private final CampusHubIdGenerator idGenerator;
+
+    /*
+     * The Special Admin ID is supplied through environment-backed
+     * Spring configuration.
+     *
+     * The real value is therefore NOT hard-coded in source code.
+     */
+    @Value("${campushub.demo.special-admin.id:}")
+    private String specialAdminId;
 
     public AdminService(
             AdminRepository adminRepository,
@@ -350,16 +359,19 @@ public class AdminService {
         }
 
         /*
-         * The designated Special Admin is the protected root
-         * administrator for CampusHub. Even though the Special
-         * Admin is allowed to delete other administrator accounts,
-         * this account itself must never be deleted.
+         * The configured Special Admin is the protected root
+         * administrator for CampusHub.
          *
-         * This check is intentionally inside the service layer,
-         * not only in the frontend/controller, so a direct backend
-         * request cannot bypass the protection.
+         * The Special Admin may delete other administrator accounts,
+         * but this account itself must never be deleted.
+         *
+         * The actual Special Admin ID comes from Spring configuration,
+         * so it is not hard-coded in the public source tree.
          */
-        if (CampusHubAuthorizationService.SPECIAL_ADMIN_ID.equals(id)) {
+        if (specialAdminId != null
+                && !specialAdminId.isBlank()
+                && specialAdminId.equals(id)) {
+
             throw new IllegalArgumentException(
                     "The Special Admin account cannot be deleted."
             );
