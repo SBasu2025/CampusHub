@@ -6,6 +6,10 @@ import {
   CalendarDays,
 } from "lucide-react";
 
+import type {
+  ClassSession,
+} from "../../../lib/api/types";
+
 import ClassSessionAgenda from "../../../components/timetable/ClassSessionAgenda";
 
 import Card from "../../../components/ui/Card";
@@ -21,6 +25,154 @@ import {
 import {
   useStudentTimetable,
 } from "./useStudentTimetable";
+
+// ============================================================
+// WEEKDAY → ISO DATE
+// ============================================================
+
+/*
+ * The live CampusHub database currently stores timetable days
+ * as weekday names:
+ *
+ *   Monday
+ *   Tuesday
+ *   Wednesday
+ *   ...
+ *
+ * The shared ClassSessionAgenda component expects an ISO date:
+ *
+ *   YYYY-MM-DD
+ *
+ * We convert the existing database value here, only for the
+ * student timetable screen.
+ *
+ * The database is NOT modified.
+ */
+
+const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+function getNextOccurrenceOfWeekday(
+  weekdayName: string,
+): string | null {
+  const normalized =
+    weekdayName
+      .trim()
+      .toLowerCase();
+
+  const weekdayIndex =
+    WEEKDAYS.findIndex(
+      (day) =>
+        day.toLowerCase() ===
+        normalized,
+    );
+
+  if (weekdayIndex === -1) {
+    return null;
+  }
+
+  const today =
+    new Date();
+
+  const todayWeekday =
+    today.getDay();
+
+  let daysUntil =
+    weekdayIndex -
+    todayWeekday;
+
+  /*
+   * If the timetable day is today, keep it as today.
+   *
+   * Otherwise, find the next occurrence of that weekday.
+   */
+  if (daysUntil < 0) {
+    daysUntil += 7;
+  }
+
+  const occurrence =
+    new Date(
+      today,
+    );
+
+  occurrence.setDate(
+    today.getDate() +
+      daysUntil,
+  );
+
+  const year =
+    occurrence.getFullYear();
+
+  const month =
+    String(
+      occurrence.getMonth() + 1,
+    ).padStart(2, "0");
+
+  const day =
+    String(
+      occurrence.getDate(),
+    ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+// ============================================================
+// NORMALIZE STUDENT TIMETABLE
+// ============================================================
+
+function normalizeStudentTimetable(
+  sessions: ClassSession[],
+): ClassSession[] {
+  return sessions
+    .map(
+      (session) => {
+        const isoDate =
+          getNextOccurrenceOfWeekday(
+            session.day,
+          );
+
+        /*
+         * If the backend already provides an ISO date,
+         * preserve it.
+         *
+         * This keeps the frontend compatible with future
+         * database/API changes without breaking the current
+         * weekday-based records.
+         */
+        if (
+          isoDate === null &&
+          /^\d{4}-\d{2}-\d{2}$/.test(
+            session.day,
+          )
+        ) {
+          return session;
+        }
+
+        /*
+         * If the value is neither a known weekday nor an ISO
+         * date, leave the session unchanged rather than
+         * inventing a date.
+         */
+        if (
+          isoDate === null
+        ) {
+          return session;
+        }
+
+        return {
+          ...session,
+          day: isoDate,
+        };
+      },
+    );
+}
 
 // ============================================================
 // COMPONENT
@@ -105,7 +257,7 @@ export default function StudentTimetable() {
     return (
       <EmptyState
         title="Unable to load timetable"
-        description="Your dated class sessions could not be retrieved from CampusHub."
+        description="Your class sessions could not be retrieved from CampusHub."
         action={{
           label:
             "Try again",
@@ -120,6 +272,19 @@ export default function StudentTimetable() {
 
   const sessions =
     query.data ?? [];
+
+  /*
+   * IMPORTANT:
+   *
+   * Do not modify the API response itself.
+   *
+   * We create a normalized copy specifically for the student
+   * timetable UI.
+   */
+  const normalizedSessions =
+    normalizeStudentTimetable(
+      sessions,
+    );
 
   // ----------------------------------------------------------
   // RENDER
@@ -164,7 +329,7 @@ export default function StudentTimetable() {
         </h1>
 
         <p className="mt-1 max-w-2xl text-body-sm text-muted">
-          Your dated class occurrences, arranged chronologically from today through upcoming sessions.
+          Your scheduled class occurrences, arranged chronologically from today through upcoming sessions.
         </p>
       </motion.div>
 
@@ -195,7 +360,7 @@ export default function StudentTimetable() {
         <Card>
           <ClassSessionAgenda
             sessions={
-              sessions
+              normalizedSessions
             }
             emptyMessage="No class sessions are scheduled yet."
           />
