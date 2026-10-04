@@ -2,7 +2,6 @@ import {
   useMemo,
   useState,
 } from "react";
-
 import {
   CalendarDays,
   Clock3,
@@ -10,9 +9,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-
 import toast from "react-hot-toast";
-
 import Button from "../../../components/ui/Button";
 import Card from "../../../components/ui/Card";
 import ConfirmDialog from "../../../components/ui/ConfirmDialog";
@@ -22,40 +19,31 @@ import Modal from "../../../components/ui/Modal";
 import { Select } from "../../../components/ui/Select";
 import Skeleton from "../../../components/ui/Skeleton";
 import ClassSessionAgenda from "../../../components/timetable/ClassSessionAgenda";
-
 import type {
   ClassSession,
 } from "../../../lib/api/types";
-
 import {
   getClassSessions,
 } from "../../../lib/api/endpoints/classSessions";
-
 import {
   generateSessionId,
   toIsoDate,
 } from "../../../lib/utils/classSession";
-
 import {
   getApiErrorMessage,
 } from "../../../lib/utils/errors";
-
 import {
   useCourses,
 } from "../courses/useCourses";
-
 import {
   useProfessors,
 } from "../professors/useProfessors";
-
 import {
   useSubjects,
 } from "../subjects/useSubjects";
-
 import {
   useTeachingsBySubject,
 } from "../teaching/useTeaching";
-
 import {
   useClassSessions,
   useCreateClassSession,
@@ -432,6 +420,7 @@ export default function AdminTimetable() {
   // ==========================================================
   // DISPLAY SESSIONS
   // ==========================================================
+
   //
   // The database currently contains legacy weekday values such as
   // Monday / Wednesday / Friday for some class sessions. The shared
@@ -610,6 +599,7 @@ export default function AdminTimetable() {
             value: String(
               index + 1,
             ),
+
             label:
               `Semester ${
                 index + 1
@@ -637,6 +627,7 @@ export default function AdminTimetable() {
             value: String(
               index + 1,
             ),
+
             label:
               `Semester ${
                 index + 1
@@ -657,11 +648,13 @@ export default function AdminTimetable() {
     setSelectedSection("");
     setSelectedSubjectId("");
     setSelectedProfessorId("");
+
     setSelectedDate(
       toIsoDate(
         new Date(),
       ),
     );
+
     setSelectedStartTime("");
     setSelectedEndTime("");
   }
@@ -843,14 +836,7 @@ export default function AdminTimetable() {
                 teaching.professor.profId,
 
               subjectId:
-                teaching.professor
-                  .profId ===
-                selectedProfessorId
-                  ? teaching.professor
-                      .profId
-                  : teaching
-                      .professor
-                      .profId,
+                selectedSubjectId,
             },
           },
 
@@ -1542,6 +1528,7 @@ export default function AdminTimetable() {
           </div>
 
           {/* Session ID information */}
+
           <div className="rounded-lg border border-primary-100 bg-primary-50 p-4">
             <p className="text-caption text-primary-700">
               Session ID
